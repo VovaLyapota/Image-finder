@@ -18,12 +18,12 @@ loadMoreBtn.addEventListener('click', onLoadMoreClick);
 
 async function onSubmitForm(event) {
   event.preventDefault();
-  loadMoreBtn.classList.add('is-hidden');
+  hideLoadMoreBtn();
 
   gallery.innerHTML = '';
   let renderingResult = await renderMurkup(event);
 
-  if (renderingResult !== null) loadMoreBtn.classList.remove('is-hidden');
+  if (renderingResult !== null) showLoadMoreBtn();
 }
 
 function onLoadMoreClick(event) {
@@ -39,7 +39,7 @@ function drawMarkup(fechedQueryInformation) {
       `<div class="photo-card">
 <a class="gallery__link" href="${item.largeImageURL}">
   <img src="${item.webformatURL}" class="gallery__image" alt="${item.tags}" loading="lazy" />
-  </a>
+</a>
   <div class="info">
     <p class="info-item">
       <b>Likes</b>
@@ -81,40 +81,20 @@ async function getInformatinAndDrawMurkup(writedRequest, pageCounter) {
 
     drawMarkup(response.finalyFechedInformation);
 
-    if (pageCounter === 1) {
-      lightbox = new SimpleLightbox('.gallery a', {
-        captions: true,
-        captionDelay: 250,
-        captionSelector: '.gallery__image',
-        captionType: 'inner',
-        captionsData: 'alt',
-      });
-    }
+    createAndPutchLightBox();
+    scrollWidow();
 
-    if (pageCounter > 1) {
-      lightbox.refresh();
+    if (
+      pageCounter * perPage >= response.totalHits ||
+      response.totalHits <= perPage
+    ) {
+      hideLoadMoreBtn();
+      colectionEndMessage.classList.remove('is-hidden');
 
-      const { height: cardHeight } = document
-        .querySelector('.gallery')
-        .firstElementChild.getBoundingClientRect();
-
-      window.scrollBy({
-        top: cardHeight * 3,
-        behavior: 'smooth',
-      });
-
-      if (
-        pageCounter * perPage >= response.totalHits ||
-        response.totalHits <= perPage
-      ) {
-        loadMoreBtn.classList.add('is-hidden');
-        colectionEndMessage.classList.remove('is-hidden');
-
-        return;
-      }
+      return null;
     }
   } catch {
-    loadMoreBtn.classList.add('is-hidden');
+    hideLoadMoreBtn();
 
     Notify.failure(
       'Sorry, there are no images matching your search query. Please try again.'
@@ -122,4 +102,39 @@ async function getInformatinAndDrawMurkup(writedRequest, pageCounter) {
 
     return null;
   }
+}
+
+function createAndPutchLightBox() {
+  if (pageCounter === 1) {
+    lightbox = new SimpleLightbox('.gallery a', {
+      captions: true,
+      captionDelay: 250,
+      captionSelector: '.gallery__image',
+      captionType: 'inner',
+      captionsData: 'alt',
+    });
+  } else if (pageCounter > 1) {
+    lightbox.refresh();
+  }
+}
+
+function scrollWidow() {
+  if (pageCounter > 1) {
+    const { height: cardHeight } = document
+      .querySelector('.gallery')
+      .firstElementChild.getBoundingClientRect();
+
+    window.scrollBy({
+      top: cardHeight * 3,
+      behavior: 'smooth',
+    });
+  }
+}
+
+function hideLoadMoreBtn() {
+  loadMoreBtn.classList.add('is-hidden');
+}
+
+function showLoadMoreBtn() {
+  loadMoreBtn.classList.remove('is-hidden');
 }
