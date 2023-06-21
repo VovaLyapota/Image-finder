@@ -1,5 +1,7 @@
-import fetchUsersRequest from './api';
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import SimpleLightbox from 'simplelightbox';
+import 'simplelightbox/dist/simple-lightbox.min.css';
+import fetchUsersRequest from './api';
 
 const formEl = document.getElementById('search-form');
 const formInputEl = document.querySelector('[name="searchQuery"]');
@@ -7,14 +9,16 @@ const gallery = document.querySelector('.gallery');
 const loadMoreBtn = document.querySelector('.load-more');
 const colectionEndMessage = document.querySelector('.colection-end');
 
-const per_page = 40;
+const perPage = 40;
 let pageCounter = 1;
+let lightbox;
 
 formEl.addEventListener('submit', onSubmitForm);
 loadMoreBtn.addEventListener('click', onLoadMoreClick);
 
 async function onSubmitForm(event) {
   event.preventDefault();
+  loadMoreBtn.classList.add('is-hidden');
 
   gallery.innerHTML = '';
   let renderingResult = await renderMurkup(event);
@@ -33,7 +37,9 @@ function drawMarkup(fechedQueryInformation) {
     gallery.insertAdjacentHTML(
       'beforeend',
       `<div class="photo-card">
-  <img src="${item.webformatURL}" alt="${item.tags}" loading="lazy" />
+<a class="gallery__link" href="${item.largeImageURL}">
+  <img src="${item.webformatURL}" class="gallery__image" alt="${item.tags}" loading="lazy" />
+  </a>
   <div class="info">
     <p class="info-item">
       <b>Likes</b>
@@ -67,18 +73,45 @@ function renderMurkup(event) {
 
 async function getInformatinAndDrawMurkup(writedRequest, pageCounter) {
   try {
-    const response = await fetchUsersRequest(writedRequest, pageCounter);
+    const response = await fetchUsersRequest(
+      writedRequest,
+      pageCounter,
+      perPage
+    );
 
     drawMarkup(response.finalyFechedInformation);
 
-    if (
-      pageCounter * per_page >= response.totalHits ||
-      response.totalHits <= per_page
-    ) {
-      loadMoreBtn.classList.add('is-hidden');
-      colectionEndMessage.classList.remove('is-hidden');
+    if (pageCounter === 1) {
+      lightbox = new SimpleLightbox('.gallery a', {
+        captions: true,
+        captionDelay: 250,
+        captionSelector: '.gallery__image',
+        captionType: 'inner',
+        captionsData: 'alt',
+      });
+    }
 
-      return;
+    if (pageCounter > 1) {
+      lightbox.refresh();
+
+      const { height: cardHeight } = document
+        .querySelector('.gallery')
+        .firstElementChild.getBoundingClientRect();
+
+      window.scrollBy({
+        top: cardHeight * 3,
+        behavior: 'smooth',
+      });
+
+      if (
+        pageCounter * perPage >= response.totalHits ||
+        response.totalHits <= perPage
+      ) {
+        loadMoreBtn.classList.add('is-hidden');
+        colectionEndMessage.classList.remove('is-hidden');
+
+        return;
+      }
     }
   } catch {
     loadMoreBtn.classList.add('is-hidden');

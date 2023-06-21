@@ -1,3 +1,8 @@
+:root {
+  --timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  --animation-duration: 250ms;
+}
+
 body {
   margin: 0px;
 }
@@ -14,6 +19,7 @@ p {
 .search-form {
   position: fixed;
   width: 100vw;
+  z-index: 999;
 
   display: flex;
   flex-direction: row;
@@ -130,4 +136,26 @@ p {
   clip: rect(0 0 0 0);
   clip-path: inset(50%);
   margin: -1px;
+}
+
+/*  */
+
+.gallery__image:hover {
+  transform: scale(1.03);
+}
+
+.gallery__image {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  transition: transform var(--animation-duration) var(--timing-function);
+}
+
+.gallery__link {
+  display: block;
+  text-decoration: none;
+}
+
+.gallery__link:hover {
+  cursor: zoom-in;
 }
